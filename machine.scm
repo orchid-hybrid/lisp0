@@ -31,6 +31,7 @@
     ((cons) cons)
     
     ((=) =)
+    ((>) >)
     ((+) +)
     ((-) -)
     ((*) *)
@@ -147,3 +148,21 @@
                      )))
 ;; #;1> (test3)
 ;; 120
+
+(define (test4)
+  (process-machine '((assign n 49)
+                     (assign m 21)
+                     gcd-loop
+                     (branch (> n m) (label dont-swap))
+                     (assign t n)
+                     (assign n m)
+                     (assign m t)
+                     dont-swap
+                     (branch (= m 0) (label done))
+                     (assign n (- n m))
+                     (branch #t (label gcd-loop))
+                     done
+                     (call (display n))
+                     )))
+;; #;1> (test4)
+;; 7
