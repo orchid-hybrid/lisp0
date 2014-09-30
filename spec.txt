@@ -28,6 +28,6 @@
             | (push <thing>)
             | (pop <variable>)
  
-<thing> ::= <variable>
+<thing> ::= <variable> | <number> | <bool>
           | (<p> <variable> ...)
           | (label <label>)
