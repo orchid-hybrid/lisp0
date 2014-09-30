@@ -23,7 +23,7 @@
 
 
 <machine> ::= label
-            | (branch <variable> <label>)
+            | (branch <thing> <label>)
             | (assign <variable> <thing>)
             | (push <thing>)
             | (pop <variable>)
