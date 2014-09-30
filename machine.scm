@@ -26,6 +26,7 @@
     ((eq?) eq)
     ((not) not)
     
+    ((pair?) pair?)
     ((car) car)
     ((cdr) cdr)
     ((cons) cons)
@@ -56,6 +57,7 @@
       (define (evaluate-thing thing)
         (cond ((symbol? thing) (register-value thing))
               ((number? thing) thing)
+              ((string? thing) thing)
               ((boolean? thing) thing)
               ((and (pair? thing) (eq? (car thing) 'label)) thing)
               ((and (pair? thing) (primitive-operation? (car thing))) =>
@@ -166,3 +168,37 @@
                      )))
 ;; #;1> (test4)
 ;; 7
+
+(define (test5)
+  (process-machine '((assign t (cons (cons 1 2) (cons 3 4)))    
+                     (assign continue (label done))
+                     (push continue)
+                     (push t)
+                     print-tree
+                     (pop t)
+                     (branch (pair? t) (label print-cons))
+                     (call (display t))
+                     (pop continue)
+                     (branch #t continue)
+                     print-cons
+                     (assign first (car t))
+                     (assign rest (cdr t))
+                     (assign continue (label print-cdr))
+                     (push rest)
+                     (push continue)
+                     (call (display "("))
+                     (push first)
+                     (branch #t (label print-tree))
+                     print-cdr
+                     (call (display " . "))
+                     (assign continue (label print-close))
+                     (pop t)
+                     (push continue)
+                     (push t)
+                     (branch #t (label print-tree))
+                     print-close
+                     (call (display ")"))
+                     (pop continue)
+                     (branch #t continue)
+                     done
+                     (call (newline)))))
