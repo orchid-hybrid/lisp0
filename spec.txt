@@ -1,0 +1,33 @@
+<l0> ::= (define <name> <t>)
+       | (define (<name> <paramter> ...) <t>)
+
+<t> ::= <v> | <number> | <bool>
+
+      | (quote <t>)
+
+      | (let ((<v> <t>) ...) <t>)
+      | (set! <v> <t>)
+      | (begin <t> ...)
+      | (if <t> <t> <t>)
+
+      | (<p> <t> ...)
+      | (<t> ...)
+
+<p> ::= car | cdr | cons
+      | eq?
+      | = | < | > | <= | >= | + | - | *
+      | display | read
+
+
+
+
+
+<machine> ::= label
+            | (branch <variable> <label>)
+            | (assign <variable> <thing>)
+            | (push <thing>)
+            | (pop <variable>)
+ 
+<thing> ::= <variable>
+          | (<p> <variable> ...)
+          | (label <label>)
