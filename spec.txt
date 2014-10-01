@@ -1,5 +1,6 @@
-<l0> ::= (define <name> <t>)
-       | (define (<name> <paramter> ...) <t>)
+;; A lisp0 program is a sequence of function definitions then a single expression to be evaluated
+
+<l0> ::= (define (<name> <paramter> ...) <t>) ... <t>
 
 <t> ::= <v> | <number> | <bool>
 
@@ -25,6 +26,7 @@
 <machine> ::= label
             | (branch <thing> <label>)
             | (assign <variable> <thing>)
+            | (call <thing>)
             | (push <thing>)
             | (pop <variable>)
  
