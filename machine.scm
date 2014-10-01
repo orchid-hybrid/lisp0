@@ -76,6 +76,16 @@
             (let ((instruction (car code)))
               (if (pair? instruction)
                   (case (car instruction)
+                    ((debug)
+                     (print 'debugging)
+                     (print 'stack)
+                     (for-each print stack)
+                     (newline)
+                     (print 'registers)
+                     (for-each print registers)
+                     (newline)
+                     (newline)
+                     (loop (cdr code)))
                     ((branch) (let ((thing (cadr instruction))
                                     (label (caddr instruction)))
                                 (if (evaluate-thing thing)
@@ -231,3 +241,48 @@
                      (branch #t (label resume))
                      sqrt-done
                      (call (display guess)))))
+
+
+(define (fib n)
+  (if (< n 2)
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
+
+
+
+
+(define (test7)
+  (process-machine '((assign k (label done))
+                     (assign n 10)
+                     (push k)
+
+                     fib
+                     (assign ret n)
+                     (branch (< n 2) (label return))
+
+                     (push n) ;; save register n
+                     (assign n (- n 1)) ;; set n for recursive call
+                     (push (label resume1)) ;; set continuation
+                     (branch #t (label fib))
+
+                     resume1
+                     (pop n) ;; restore n
+                     (push n) ;; save register n
+                     (push ret) ;; save return value
+                     (assign n (- n 2)) ;; set n for recursive call
+                     (push (label resume2)) ;; set continuation
+                     (branch #t (label fib))
+
+                     resume2
+                     (pop arg1) ;; resture first return val
+                     (assign arg2 ret) ;; save return value
+                     (pop n) ;; restore n
+                     (assign ret (+ arg1 arg2)) ;; set return value
+                     (branch #t (label return))
+                     
+                     return
+                     (pop k)
+                     (branch #t k)
+
+                     done
+                     (call (display ret)))))
