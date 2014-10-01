@@ -23,6 +23,9 @@
     ((display) display)
     ((newline) newline)
     
+    ((good-enough?) good-enough?)
+    ((improve) improve)
+
     ((eq?) eq)
     ((not) not)
     
@@ -33,9 +36,11 @@
     
     ((=) =)
     ((>) >)
+    ((<) <)
     ((+) +)
     ((-) -)
     ((*) *)
+    ((/) /)
     
     (else #f)))
 
@@ -202,3 +207,27 @@
                      (branch #t continue)
                      done
                      (call (newline)))))
+
+
+(define (test6)
+  (process-machine '((assign x 100)
+                     (assign guess 100)
+                     sqrt-iter
+                     (assign tmp (* guess guess))assign guess
+                     (assign tmp (- tmp x))
+                     (branch #t (label abs))
+                     resume
+                     (assign tmp (< tmp 0.001))
+                     (branch tmp (label sqrt-done))
+                     (assign tmp (/ x guess))
+                     (assign tmp (+ guess tmp))
+                     (assign tmp (/ tmp 2))
+                     (assign guess tmp)
+                     (branch #t (label sqrt-iter))
+                     abs
+                     (assign pos (< 0 tmp))
+                     (branch pos (label resume))
+                     (assign tmp (- tmp))
+                     (branch #t (label resume))
+                     sqrt-done
+                     (call (display guess)))))
