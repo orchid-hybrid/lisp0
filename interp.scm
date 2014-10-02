@@ -93,10 +93,19 @@
    ((and (list? exp) (assoc (car exp) (prims)))
     (apply (assoc (car exp) (prims)) (cdr exp)))
    ((app-exp? exp)
-    (let ((fn (cadr (assoc exp env))))
-      (lisp0-eval
-       (definition-body)
-       (zip (definition-params fn) (cdr exp) '()))))))
+    (let ((arguments (map (lambda (sub-exp) (lisp0-eval sub-exp env)) (cdr exp))))
+      (cond ((primitive-operation? exp) =>
+             (lambda (prim)
+               (apply prim arguments)))
+            (else
+             (let ((definition (assoc exp *definitions*)))
+               (if definition
+                   (let ((parameters (second definition))
+                         (body (third definition)))
+                     (let ((extra-env (map cons parameters arguments))))
+                     (lisp0-eval body (append extra-env env)))
+                   (error "no such function defined")))))))))
+
 
 (define (run-lisp0 program)
   (for-each lisp0-toplevel-eval program))
