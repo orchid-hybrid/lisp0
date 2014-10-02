@@ -15,25 +15,6 @@
   (cddr exp))
 ;; (definition-body '(define (x y z) b ...)) => (b ...)
 
-;; exp -> env -> ((maybe exp) . env)
-(define (lisp0-collect-def exp)
-  (cond
-   ;; (define (x y z) b ...) => (cons (x 
-   ((definition? exp) (cons (list)
-                            (list (cons (definition-name exp) exp))))
-   (else (cons (list exp) (list)))))
-
-(define (lisp0-collect-defs program prog-env)
-  (if (null? program)
-      prog-env
-      (let ((exp-env (lisp0-collect-def (car program))))
-        (let ((exp (car exp-env))
-              (env (cdr exp-env))
-              (prog (car prog-env))
-              (penv (cdr prog-env)))
-          (lisp0-collect-defs (cdr program)
-                              (cons (append exp prog) (append env penv)))))))
-
 (define (let-exp? exp)
   (and (list? exp)
        (eql? 'let (car exp))))
@@ -84,6 +65,17 @@
 (define (quote-exp? exp)
   (and (list? exp) (eq? 'quote (car exp))))
 
+(define *definitions* '())
+
+(define (lisp0-toplevel-eval exp)
+  (if (definition? exp)
+      (begin
+        (set! *definitions* (cons (list (definition-name exp)
+                                        (definition-params exp)
+                                        (definition-body exp))
+                                  *definitions*)))
+      (lisp0-eval exp '())))
+
 (define (lisp0-eval exp env)
   (cond
    ((number? exp) exp)
@@ -106,9 +98,5 @@
        (definition-body)
        (zip (definition-params fn) (cdr exp) '()))))))
 
-
 (define (run-lisp0 program)
-  (let ((exp-env (lisp0-collect-defs program)))
-    (lisp0-eval
-     (cons 'begin (car exp-env))
-     (cdr exp-env))))
+  (for-each lisp0-toplevel-eval program))
