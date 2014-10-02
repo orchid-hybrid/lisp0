@@ -37,8 +37,17 @@
 (define (let-exp? exp)
   (and (list? exp)
        (eql? 'let (car exp))))
+
 (define (let-bindings exp)
-  (cadr exp))
+  (let-bindings-aux (cadr exp) '()))
+
+(define (let-bindings-aux bs m)
+  (if (null? bs)
+      m
+      (let-bindings-aux
+       (cdr bs)
+       (cons (cons (caar bs) (cadar bs)) m))))
+
 (define (let-body exp)
   (cddr exp))
 
@@ -83,7 +92,7 @@
    ((quote-exp? exp) exp)
    ((let-exp? exp) (lisp0-eval
                     (cons 'begin (let-body exp))
-                    (zip (definition-params fn) (cdr exp) env)))
+                    (append (let-bindings exp) env)))
    ((begin-exp? exp)
     (lisp0-eval-begin (cadr exp)))
    ((if-exp? exp) (if (cadr exp)
