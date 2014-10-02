@@ -50,22 +50,6 @@
       (begin (lisp0-eval (car exps))
              (lisp0-eval-begin (cdr exps)))))
 
-(define prims
-  `(list (cons 'car car)
-         (cons 'cdr cdr)
-         (cons 'cons cons)
-         (cons '= =)
-         (cons '+ +)
-         (cons '- -)
-         (cons '* *)
-         (cons '> >)
-         (cons '< <)
-         (cons '>= >=)
-         (cons '<= <=)
-         (cons 'eq? eq?)
-         (cons 'display display)
-         (cons 'read read)))
-
 (define (quote-exp? exp)
   (and (list? exp) (eq? 'quote (car exp))))
 
@@ -74,6 +58,9 @@
 (define (lisp0-toplevel-eval exp)
   (if (definition? exp)
       (begin
+        (print (list 'defining exp (list (definition-name exp)
+                                        (definition-params exp)
+                                        (definition-body exp))))
         (set! *definitions* (cons (list (definition-name exp)
                                         (definition-params exp)
                                         (definition-body exp))
@@ -82,10 +69,6 @@
 
 (define (app-exp? exp)
   (and (list? exp) ))
-
-(define (primitive-operation? exp)
-  (cond ((and (symbol? exp) (assoc exp prims)) => cadr)
-         (else #f)))
 
 (define (lisp0-eval exp env)
   (cond
@@ -103,17 +86,17 @@
                       (lisp0-eval (cadddr exp) env)))
    ((app-exp? exp)
     (let ((arguments (map (lambda (sub-exp) (lisp0-eval sub-exp env)) (cdr exp))))
-      (cond ((primitive-operation? exp) =>
+      (cond ((primitive-operation? (car exp)) =>
              (lambda (prim)
                (apply prim arguments)))
             (else
-             (let ((definition (assoc exp *definitions*)))
+             (let ((definition (assoc (car exp) *definitions*)))
                (if definition
-                   (let ((parameters (second definition))
-                         (body (third definition)))
+                   (let ((parameters (cadr definition))
+                         (body (caddr definition)))
                      (let ((extra-env (map cons parameters arguments)))
                        (lisp0-eval body (append extra-env env))))
-                   (error "no such function defined")))))))))
+                   (error "no such function defined" (car exp))))))))))
 
 
 (define (run-lisp0 program)

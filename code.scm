@@ -5,11 +5,11 @@
                 (loop)))
 
 (define code2 '((define (fib n m l)
-                    (display n)
-                    (newline)
-                    (if (= l 0)
-                        0
-                        (fib (+ m n) n (- l 1))))
+                  (display n)
+                  (newline)
+                  (if (= l 0)
+                      0
+                      (fib (+ m n) n (- l 1))))
                 (fib 0 1 10)))
 
 (define code3 '((define (fact n)
