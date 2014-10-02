@@ -44,11 +44,10 @@
 (define (begin-exp? exp)
   (and (list? exp) (eq? 'begin (car exp))))
 
-(define (lisp0-eval-begin exps env)
+(define (lisp0-eval-begin exps env last)
   (if (null? exps)
-      '()
-      (begin (lisp0-eval (car exps) env)
-             (lisp0-eval-begin (cdr exps) env))))
+      last
+      (lisp0-eval-begin (cdr exps) env (lisp0-eval (car exps) env))))
 
 (define (quote-exp? exp)
   (and (list? exp) (eq? 'quote (car exp))))
@@ -83,7 +82,7 @@
                     (cons 'begin (let-body exp))
                     (append (let-bindings exp) env)))
    ((begin-exp? exp)
-    (lisp0-eval-begin (cdr exp) env))
+    (lisp0-eval-begin (cdr exp) env '()))
    ((if-exp? exp) (if (lisp0-eval (cadr exp) env)
                       (lisp0-eval (caddr exp) env)
                       (lisp0-eval (cadddr exp) env)))
