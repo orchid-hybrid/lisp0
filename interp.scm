@@ -12,7 +12,7 @@
 ;; (definition-params '(define (x y z) b ...) => (y z)
 
 (define (definition-body exp)
-  (cddr exp))
+  `(begin . ,(cddr exp)))
 ;; (definition-body '(define (x y z) b ...)) => (b ...)
 
 (define (if-exp? exp)
@@ -44,11 +44,11 @@
 (define (begin-exp? exp)
   (and (list? exp) (eq? 'begin (car exp))))
 
-(define (lisp0-eval-begin exps)
+(define (lisp0-eval-begin exps env)
   (if (null? exps)
       '()
-      (begin (lisp0-eval (car exps))
-             (lisp0-eval-begin (cdr exps)))))
+      (begin (lisp0-eval (car exps) env)
+             (lisp0-eval-begin (cdr exps) env))))
 
 (define (quote-exp? exp)
   (and (list? exp) (eq? 'quote (car exp))))
@@ -71,17 +71,20 @@
   (and (list? exp) ))
 
 (define (lisp0-eval exp env)
+  ;(print exp)
   (cond
    ((number? exp) exp)
    ((boolean? exp) exp)
-   ((symbol? exp) (cadr (assoc exp env)))
+   ((symbol? exp) (let ((result (assoc exp env)))
+                    (if result (cdr result)
+                        (error "unbound variable" exp))))
    ((quote-exp? exp) exp)
    ((let-exp? exp) (lisp0-eval
                     (cons 'begin (let-body exp))
                     (append (let-bindings exp) env)))
    ((begin-exp? exp)
-    (lisp0-eval-begin (cadr exp)))
-   ((if-exp? exp) (if (cadr exp)
+    (lisp0-eval-begin (cdr exp) env))
+   ((if-exp? exp) (if (lisp0-eval (cadr exp) env)
                       (lisp0-eval (caddr exp) env)
                       (lisp0-eval (cadddr exp) env)))
    ((app-exp? exp)
