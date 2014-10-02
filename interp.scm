@@ -15,9 +15,13 @@
   (cddr exp))
 ;; (definition-body '(define (x y z) b ...)) => (b ...)
 
+(define (if-exp? exp)
+  (and (list? exp)
+       (eq? 'if (car exp))))
+
 (define (let-exp? exp)
   (and (list? exp)
-       (eql? 'let (car exp))))
+       (eq? 'let (car exp))))
 
 (define (let-bindings exp)
   (let-bindings-aux (cadr exp) '()))
@@ -46,7 +50,7 @@
       (begin (lisp0-eval (car exps))
              (lisp0-eval-begin (cdr exps)))))
 
-(define (prims)
+(define prims
   `(list (cons 'car car)
          (cons 'cdr cdr)
          (cons 'cons cons)
@@ -76,6 +80,13 @@
                                   *definitions*)))
       (lisp0-eval exp '())))
 
+(define (app-exp? exp)
+  (and (list? exp) ))
+
+(define (primitive-operation? exp)
+  (cond ((and (symbol? exp) (assoc exp prims)) => cadr)
+         (else #f)))
+
 (define (lisp0-eval exp env)
   (cond
    ((number? exp) exp)
@@ -90,8 +101,6 @@
    ((if-exp? exp) (if (cadr exp)
                       (lisp0-eval (caddr exp) env)
                       (lisp0-eval (cadddr exp) env)))
-   ((and (list? exp) (assoc (car exp) (prims)))
-    (apply (assoc (car exp) (prims)) (cdr exp)))
    ((app-exp? exp)
     (let ((arguments (map (lambda (sub-exp) (lisp0-eval sub-exp env)) (cdr exp))))
       (cond ((primitive-operation? exp) =>
@@ -102,8 +111,8 @@
                (if definition
                    (let ((parameters (second definition))
                          (body (third definition)))
-                     (let ((extra-env (map cons parameters arguments))))
-                     (lisp0-eval body (append extra-env env)))
+                     (let ((extra-env (map cons parameters arguments)))
+                       (lisp0-eval body (append extra-env env))))
                    (error "no such function defined")))))))))
 
 
