@@ -19,12 +19,12 @@
                 (display (fact 5))))
 
 (define code4 '((define (gcd n m)
-                  (if (> n m)
+                  (if (>= n m)
                       (if (= m 0)
                           n
                           (gcd (- n m) m))
                       (gcd m n)))
-                (gcd 49 21)))
+                (display (gcd 49 21))))
 
 
 (define code5
@@ -39,9 +39,10 @@
     (define (print-tree t)
       (if (number? t)
           (print-num t)
-          (print-cons c)))))
+          (print-cons t)))
+    (print-tree (cons (cons 1 3) (cons 4 7)))))
 
-(define test6
+(define code6
   '((define (square x) (* x x))
     (define (average x y)
       (/ (+ x y) 2))
@@ -56,4 +57,5 @@
     (define (abs x)
       (if (< 0 x) x (- 0 x)))
     (define (sqrt x)
-      (sqrt-iter 1.0 x))))
+      (sqrt-iter 1.0 x))
+    (display (sqrt (* 77665 77665)))))

@@ -74,6 +74,7 @@
   (cond
    ((number? exp) exp)
    ((boolean? exp) exp)
+   ((string? exp) exp)
    ((symbol? exp) (let ((result (assoc exp env)))
                     (if result (cdr result)
                         (error "unbound variable" exp))))
