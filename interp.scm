@@ -196,7 +196,7 @@
        (lambda (r e) (eval0 (car args) e (lambda (r1 e1) (k (cons r1 r) e1)))))))
 
 (define (fold-args args k)
-  (fold-args-aux (reverse args) k))
+  (fold-args-aux args k))
 
 (define (lisp0-abs program)
   (lisp0ss-collect-defs program)
