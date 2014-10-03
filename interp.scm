@@ -98,7 +98,7 @@
                    (let ((parameters (cadr definition))
                          (body (caddr definition)))
                      (let ((extra-env (map cons parameters arguments)))
-                       (lisp0-eval body (append extra-env env))))
+                       (lisp0-eval body extra-env)))
                    (error "no such function defined" (car exp))))))))))
 
 

@@ -22,9 +22,6 @@
   (case p
     ((display) display)
     ((newline) newline)
-    
-    ((good-enough?) good-enough?)
-    ((improve) improve)
 
     ((eq?) eq)
     ((not) not)
