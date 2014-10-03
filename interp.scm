@@ -131,12 +131,12 @@
    ((number? c) (k c e))
    ((boolean? c) (k c e))
    ((string? c) (k c e))
-   ((symbol? c) (let ((result (assoc c env)))
+   ((symbol? c) (let ((result (assoc c e)))
                     (if result
                         (k (cdr result) e)
                         (error "unbound variable" c))))
    ((definition? c) ;; definition: skip
-    (k '() env))
+    (k '() e))
    ((begin-exp? c) ;; begin
     ((fold-begin (cdr c) k) '() e))
 
@@ -148,13 +148,13 @@
            (f (cadddr c))
            (passk (lambda (r e) (eval0 p e k)))
            (failk (lambda (r e) (eval0 f e k)))
-           (testk (lamba (r e) (if r
+           (testk (lambda (r e) (if r
                                    (passk '() e)
                                    (failk '() e)))))
       (eval0 condition e testk)))
    ((let-exp? c) ;; let
     (eval0 (cons 'begin (let-body c))
-           (append (let-bindings c) env)
+           (append (let-bindings c) e)
            (lambda (r e1) (k r e)))) ;; have to unlet values before k
    ((app-exp? c)
     ;; apply:
