@@ -141,7 +141,6 @@
     ((fold-begin (cdr c) k) '() e))
 
    ((if-exp? c)
-    (display c) (newline)
     ;; if, put corresponding pass/fail clause as next step
     (let* ((condition (cadr c))
            (p (caddr c))
@@ -203,4 +202,4 @@
   (lisp0ss-collect-defs program)
   (eval0 (cons 'begin program)
          '()
-         (lambda (r e) `((ret-val . ,r) (env . ,e)))))
+         (lambda (r e) (display `((ret-val . ,r) (env . ,e))))))
