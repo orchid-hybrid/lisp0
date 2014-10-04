@@ -147,9 +147,9 @@
            (f (cadddr c))
            (passk (lambda (r e) (eval0 p e k)))
            (failk (lambda (r e) (eval0 f e k)))
-           (testk (lambda (r e) (if r
-                                   (passk '() e)
-                                   (failk '() e)))))
+           (testk (lambda (r e) `(if r
+                                   ,(passk '() e)
+                                   ,(failk '() e)))))
       (eval0 condition e testk)))
    ((let-exp? c) ;; let
     (eval0 (cons 'begin (let-body c))
