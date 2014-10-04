@@ -44,6 +44,32 @@
     
     (else #f)))
 
+(define (primitive-operation-arity p)
+  (case p
+    ((display) 1)
+    ((newline) 1)
+
+    ((eq?) 2)
+    ((not) 1)
+    ((number?) 1)
+    
+    ((pair?) 1)
+    ((car) 1)
+    ((cdr) 1)
+    ((cons) 2)
+    
+    ((=) 2)
+    ((>) 2)
+    ((<) 2)
+    ((>=) 2)
+    ((<=) 2)
+    ((+) 2)
+    ((-) 2)
+    ((*) 2)
+    ((/) 2)
+    
+    (else #f)))
+
 (define (process-machine machine)
   (let* ((labels (filter symbol? machine))
          (label-code (map (lambda (label) (member label machine)) labels)))
@@ -74,6 +100,7 @@
         (if (null? code)
             #f
             (let ((instruction (car code)))
+(print instruction)
               (if (pair? instruction)
                   (case (car instruction)
                     ((debug)
@@ -286,3 +313,34 @@
 
                      done
                      (call (display ret)))))
+
+;;
+
+(define (ctest1)
+  (process-machine
+   '(
+(branch #t (label g328))
+foo327
+(assign return-value x)
+(push return-value)
+(assign return-value x)
+(push return-value)
+(pop p2)
+(pop p1)
+(assign return-value (+ p1 p2))
+(pop continue)
+(branch #t continue)
+g328
+(assign return-value 7)
+(push return-value)
+(pop x)
+(push (label g330))
+(branch #t (label foo327))
+g330
+(push return-value)
+(pop x)
+(push (label g329))
+(branch #t (label foo327))
+g329
+(call (display return-value))
+     )))
