@@ -50,6 +50,10 @@
                     (list-difference (cdr s1) s2)))))
 
 (define (preserving regs seq1 seq2)
+  
+  ;(for-each print (list 'debugging regs seq1 seq2))
+  ;(newline)
+  
   (if (null? regs)
       (append-instruction-sequences seq1 seq2)
       (let ((first-reg (car regs)))
@@ -61,9 +65,9 @@
                           (registers-needed seq1))
               (list-difference (registers-modified seq1)
                                (list first-reg))
-              (append `((save ,first-reg))
+              (append `((push ,first-reg))
                       (statements seq1)
-                      `((restore ,first-reg))))
+                      `((pop ,first-reg))))
              seq2)
             (preserving (cdr regs) seq1 seq2)))))
 
@@ -81,19 +85,21 @@
                                        '() '()
                                        (list `(branch #t (label ,skip))
                                              label))
-                                      (lisp0-compile (definition-body exp))
+                                      (lisp0-compile (definition-body exp) 'return-value)
                                       (make-instruction-sequence
                                        '() '()
                                        (list `(pop continue)
                                              `(branch #t continue)
                                              skip))))
-      (lisp0-compile exp)))
+      (lisp0-compile exp 'return-value)))
   
-(define (lisp0-compile-begin exps)
+(define (lisp0-compile-begin exps return-value)
   (if (null? exps)
       (empty-instruction-sequence)
-      (append-instruction-sequences (lisp0-compile (car exps))
-                                    (lisp0-compile-begin (cdr exps)))))
+      (if (null? (cdr exps))
+          (lisp0-compile (car exps) return-value)
+          (append-instruction-sequences (lisp0-compile (car exps) 'return-value)
+                                        (lisp0-compile-begin (cdr exps) return-value)))))
 
 ;; (define (save-environment-to-stack env)
 ;;   (define (save name)
@@ -112,21 +118,21 @@
     ((2) '(p1 p2))
     (else (error "not that far advanced"))))
 
-(define (lisp0-compile exp)
+(define (lisp0-compile exp return-value)
   ;(print exp)
   (cond
    ((number? exp) (make-instruction-sequence
-                   '() '() (list `(assign return-value ,exp))))
+                   '() '() (list `(assign ,return-value ,exp))))
    ((boolean? exp) (make-instruction-sequence
-                    '() '() (list `(assign return-value ,exp))))
+                    '() '() (list `(assign ,return-value ,exp))))
    ((string? exp) (make-instruction-sequence
-                   '() '() (list `(assign return-value ,exp))))
+                   '() '() (list `(assign ,return-value ,exp))))
    ((symbol? exp) (make-instruction-sequence
-                   '() '() (list `(assign return-value ,exp))))
+                   '() '() (list `(assign ,return-value ,exp))))
    ((quote-exp? exp) (error "not implementedq"))
    ((let-exp? exp) (error "not implementedl"))
    ((begin-exp? exp)
-    (lisp0-compile-begin (cdr exp)))
+    (lisp0-compile-begin (cdr exp) return-value))
    ((if-exp? exp)
     (error "not imlpemented")
     (if (lisp0-compile (cadr exp))
@@ -140,7 +146,7 @@
                 (apply append-instruction-sequences
                        (map (lambda (sub-exp)
                               (append-instruction-sequences
-                               (lisp0-compile sub-exp)
+                               (lisp0-compile sub-exp 'return-value)
                                (make-instruction-sequence '() '() (list `(push return-value)))))
                             (cdr exp)))
                 (apply append-instruction-sequences
@@ -149,7 +155,6 @@
                             (reverse parameter-list)))
                 (make-instruction-sequence
                  '() '() (list `(assign return-value (,(car exp) . ,parameter-list))))))))
-     
      
      ;; ((primitive-operation-arity (car exp)) =>
      ;;       (lambda (arity)
@@ -170,22 +175,43 @@
              (if definition
                  (let ((label (gensym))
                        (def-label (cadr definition)))
-                   (append-instruction-sequences
-                    (apply append-instruction-sequences
-                           (map (lambda (sub-exp)
-                                  (append-instruction-sequences
-                                   (lisp0-compile sub-exp)
-                                   (make-instruction-sequence '() '() (list `(push return-value)))))
-                                (cdr exp)))
-                    (apply append-instruction-sequences
-                           (map (lambda (parameter)
-                                  (make-instruction-sequence '() '() (list `(pop ,parameter))))
-                                (reverse (caddr definition))))
-                    (make-instruction-sequence
-                     '() '() (list `(push (label ,label))
-                                   `(branch #t (label ,def-label))
-                                   label))))
+                   (let loop ((exps (reverse (cdr exp)))
+                              (return-value-registers (caddr definition))
+                              (inner
+                               (make-instruction-sequence
+                                '() '() (list `(push (label ,label))
+                                              `(branch #t (label ,def-label))
+                                              label
+                                              `(assign ,return-value return-value)))))
+                     (if (null? exps)
+                         inner
+                         (loop (cdr exps)
+                               (cdr return-value-registers)
+                               (preserving (list 'return-value)
+                                           (lisp0-compile (car exps) (car return-value-registers))
+                                           inner)))))
                  (error (list exp "not a definition"))))
+
+           ;; (let ((definition (assoc (car exp) *machine-definitions*)))
+           ;;   (if definition
+           ;;       (let ((label (gensym))
+           ;;             (def-label (cadr definition)))
+           ;;         (append-instruction-sequences
+           ;;          (apply append-instruction-sequences
+           ;;                 (map (lambda (sub-exp)
+           ;;                        (append-instruction-sequences
+           ;;                         (lisp0-compile sub-exp)
+           ;;                         (make-instruction-sequence '() '() (list `(push return-value)))))
+           ;;                      (cdr exp)))
+           ;;          (apply append-instruction-sequences
+           ;;                 (map (lambda (parameter)
+           ;;                        (make-instruction-sequence '() '() (list `(pop ,parameter))))
+           ;;                      (reverse (caddr definition))))
+           ;;          (make-instruction-sequence
+           ;;           '() '() (list `(push (label ,label))
+           ;;                         `(branch #t (label ,def-label))
+           ;;                         label))))
+           ;;       (error (list exp "not a definition"))))
            
            ;; (let ((definition (assoc (car exp) *machine-definitions*)))
            ;;   (if definition
@@ -213,31 +239,41 @@
   (apply append-instruction-sequences (map lisp0-toplevel-compile program)))
 
 (define (c1)
-  (compile-lisp0 '(
-                   1
-                   ))
+  (for-each print (statements
+                   (compile-lisp0 '(
+                                    1
+                                    ))))
   ;(for-each print (reverse *machine-code*))
   )
 
 (define (c2)
+  (for-each print (statements
   (compile-lisp0 '(
                    (define (foo x) x)
                    (foo 1)
                    ))
   ;(for-each print (reverse *machine-code*))
   )
+  )
+  )
 
 (define (c3)
+  (for-each print (statements
   (compile-lisp0 '(
                    (+ 1 3)
                    ))
   ;(for-each print (reverse *machine-code*))
   )
+  )
+  )
 
 (define (c4)
+  (for-each print (statements
   (compile-lisp0 '(
                    (define (foo x) (+ x x))
                    (foo (foo 7))
                    ))
   ;(for-each print (reverse *machine-code*))
+  )
+  )
   )

@@ -319,8 +319,27 @@
 (define (ctest1)
   (process-machine
    '(
-
-(branch #t (label g364)) foo363 (assign return-value x) (push return-value) (assign return-value x) (push return-value) (pop p2) (pop p1) (assign return-value (+ p1 p2)) (pop continue) (branch #t continue) g364 (assign return-value 7) (push return-value) (pop x) (push (label g366)) (branch #t (label foo363)) g366 (push return-value) (pop x) (push (label g365)) (branch #t (label foo363)) g365
+(branch #t (label g365))
+foo364
+(assign return-value x)
+(push return-value)
+(assign return-value x)
+(push return-value)
+(pop p2)
+(pop p1)
+(assign return-value (+ p1 p2))
+(pop continue)
+(branch #t continue)
+g365
+(assign x 7)
+(push (label g367))
+(branch #t (label foo364))
+g367
+(assign x return-value)
+(push (label g366))
+(branch #t (label foo364))
+g366
+(assign return-value return-value)
 
 (call (display return-value))
      )))
