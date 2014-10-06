@@ -1,5 +1,3 @@
-;; 17:57
-
 (define *machine-definitions* '())
 ;; (define *machine-code* '())
 
@@ -187,7 +185,7 @@
                          inner
                          (loop (cdr exps)
                                (cdr return-value-registers)
-                               (preserving (list 'return-value)
+                               (preserving (cdr return-value-registers);(list 'return-value)
                                            (lisp0-compile (car exps) (car return-value-registers))
                                            inner)))))
                  (error (list exp "not a definition"))))
