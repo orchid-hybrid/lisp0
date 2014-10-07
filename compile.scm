@@ -1,3 +1,5 @@
+;; 17:57
+
 (define *machine-definitions* '())
 ;; (define *machine-code* '())
 
@@ -37,6 +39,15 @@
         (append-2-sequences (car seqs)
                             (append-seq-list (cdr seqs)))))
   (append-seq-list seqs))
+
+(define (parallel-instruction-sequences seq1 seq2)
+  (make-instruction-sequence
+   (list-union (registers-needed seq1)
+               (registers-needed seq2))
+   (list-union (registers-modified seq1)
+               (registers-modified seq2))
+   (append (statements seq1) (statements seq2))))
+
 (define (list-union s1 s2)
   (cond ((null? s1) s2)
         ((memq (car s1) s2) (list-union (cdr s1) s2))
@@ -116,6 +127,7 @@
     ((2) '(p1 p2))
     (else (error "not that far advanced"))))
 
+
 (define (lisp0-compile exp return-value)
   ;(print exp)
   (cond
@@ -131,11 +143,24 @@
    ((let-exp? exp) (error "not implementedl"))
    ((begin-exp? exp)
     (lisp0-compile-begin (cdr exp) return-value))
-   ((if-exp? exp)
-    (error "not imlpemented")
-    (if (lisp0-compile (cadr exp))
-        (lisp0-compile (caddr exp))
-        (lisp0-compile (cadddr exp))))
+   ((if-exp? exp) 
+    (let ((t-branch (gensym 'true-branch))
+          (f-branch (gensym 'false-branch))                    
+          (after-if (gensym 'after-if)))
+      (let ((p-code (lisp0-compile (cadr exp) 'return-value))
+            (c-code (lisp0-compile (caddr exp) return-value))
+            (a-code (lisp0-compile (cadddr exp) return-value))
+            (after (make-instruction-sequence '() '()
+                                              `((branch #t (label ,after-if))))))
+        (preserving '(return-value)
+                    p-code
+                    (append-instruction-sequences
+                     (make-instruction-sequence '() '()
+                                                `((branch return-value (label ,t-branch))))
+                     (parallel-instruction-sequences
+                      (append-instruction-sequences f-branch a-code after)
+                      (append-instruction-sequences t-branch c-code))
+                     after-if)))))
    ((app-exp? exp)
     (cond ((primitive-operation-arity (car exp)) =>
            (lambda (arity)
@@ -173,7 +198,7 @@
              (if definition
                  (let ((label (gensym))
                        (def-label (cadr definition)))
-                   (let loop ((exps (reverse (cdr exp)))
+                   (let loop ((exps (cdr exp))
                               (return-value-registers (caddr definition))
                               (inner
                                (make-instruction-sequence
@@ -270,6 +295,20 @@
   (compile-lisp0 '(
                    (define (foo x) (+ x x))
                    (foo (foo 7))
+                   ))
+  ;(for-each print (reverse *machine-code*))
+  )
+  )
+  )
+
+(define (c5)
+  (for-each print (statements
+  (compile-lisp0 '((define (add1 a) (display a) (+ a 1))
+                   (define (count from to)
+                     (if (> from to)
+                         #t
+                         (count (add1 from) to)))
+                   (count 1 10)
                    ))
   ;(for-each print (reverse *machine-code*))
   )
